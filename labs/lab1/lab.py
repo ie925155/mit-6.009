@@ -16,23 +16,23 @@ class Image:
         self.height = height
         self.pixels = pixels
 
-    def get_pixel(self, x, y):
-        return self.pixels[x, y]
+    def get_pixel(self, i):
+        return self.pixels[i]
 
-    def set_pixel(self, x, y, c):
-        self.pixels[x, y] = c
+    def set_pixel(self, i, c):
+        self.pixels[i] = c
 
     def apply_per_pixel(self, func):
-        result = Image.new(self.height, self.width)
-        for x in range(result.width):
-            for y in range(result.height):
-                color = self.get_pixel(x, y)
-                newcolor = func(color)
-            result.set_pixel(y, x, newcolor)
+        result = Image.new(self.width, self.height)
+        img_size = result.height * result.width
+        for i in range(img_size):
+            color = self.get_pixel(i)
+            newcolor = func(color)
+            result.set_pixel(i, newcolor)
         return result
 
     def inverted(self):
-        return self.apply_per_pixel(lambda c: 256-c)
+        return self.apply_per_pixel(lambda c: 255-c)
 
     def blurred(self, n):
         raise NotImplementedError
