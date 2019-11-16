@@ -16,23 +16,71 @@ class Image:
         self.height = height
         self.pixels = pixels
 
-    def get_pixel(self, i):
-        return self.pixels[i]
+    def get_pixel(self, y, x):
+        #print("y={}, x={}".format(y, x))
+        if y < 0:
+            if x <= 0:
+                return self.pixels[0]
+            elif x >= self.width - 1:
+                return self.pixels[self.width - 1]
+            else:
+                return self.pixels[x]
+        elif y > self.height - 1:
+            if x <= 0:
+                return self.pixels[self.width - 1]
+            elif x >= self.width - 1:
+                return self.pixels[self.width * self.height - 1]
+            else:
+                return self.pixels[(self.height - 1) * self.width + x]
+        elif x < 0:
+            return self.pixels[y * self.width]
+        elif x > self.width - 1:
+            return  self.pixels[(y + 1) * self.width - 1]
 
-    def set_pixel(self, i, c):
-        self.pixels[i] = c
+        return self.pixels[y * self.width + x]
+
+    def set_pixel(self, y, x, c):
+        self.pixels[y * self.width + x] = c
 
     def apply_per_pixel(self, func):
         result = Image.new(self.width, self.height)
-        img_size = result.height * result.width
-        for i in range(img_size):
-            color = self.get_pixel(i)
-            newcolor = func(color)
-            result.set_pixel(i, newcolor)
+        for y in range(result.height):
+            for x in range(result.width):
+                color = self.get_pixel(y, x)
+                newcolor = func(color)
+                result.set_pixel(y, x, newcolor)
         return result
 
     def inverted(self):
         return self.apply_per_pixel(lambda c: 255-c)
+
+
+    def cross_correlate(self, y, x, kernel):
+        #print("y={}, x={}".format(y, x))
+        result = []
+        start_y = int(y - (kernel.height - 1) / 2)
+        start_x = int(x - (kernel.width - 1) / 2)
+        #print("start_y={}, start_x={}".format(start_y, start_x))
+        kernel_y = 0
+        for j in range(start_y, start_y + kernel.height):
+            kernel_x = 0
+            for i in range(start_x, start_x + kernel.width):
+                result.append(self.get_pixel(j, i) * kernel.get_pixel(kernel_y, kernel_x))
+                kernel_x += 1
+            kernel_y += 1
+        #print(result)
+        return sum(result)
+
+    def filter_with_kernel(self, k):
+        result = Image.new(self.width, self.height)
+        for y in range(self.height):
+            for x in range(self.width):
+                color = self.cross_correlate(y, x, k)
+                result.set_pixel(y, x, color)
+        return result
+
+    def filtered(self, k):
+        return self.filter_with_kernel(k)
 
     def blurred(self, n):
         raise NotImplementedError

@@ -59,6 +59,56 @@ class TestInverted(unittest.TestCase):
                 expected = lab.Image.load(expfile)
                 self.assertEqual(result, expected)
 
+class TestCorrelation(unittest.TestCase):
+    def test_correlation_1(self):
+        expected = lab.Image.load('test_images/centered_pixel.png')
+        kernel = lab.Image(3, 3, [0, 0, 0,
+                                  0, 1, 0, 
+                                  0, 0, 0])
+        result = expected.filtered(kernel)
+        self.assertEqual(result, expected)
+
+    def test_correlation_2(self):
+        im = lab.Image.load('test_images/centered_pixel.png')
+        kernel = lab.Image(5, 5, [0, 0, 0, 0, 0,
+                                  0, 0, 0, 0, 0,
+                                  1, 0, 0, 0, 0,
+                                  0, 0, 0, 0, 0,
+                                  0, 0, 0, 0, 0])
+        result = im.filtered(kernel)
+        expected = lab.Image(11, 11,
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.assertEqual(result, expected)
+
+    def test_correlation_3(self):
+        im = lab.Image.load('test_images/centered_pixel.png')
+        kernel = lab.Image(3, 3, [0, 0.2, 0,
+                                  0.2, 0.2, 0.2,
+                                  0, 0.2, 0])
+        result = im.filtered(kernel)
+        expected = lab.Image(11, 11,
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 51, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 51, 51, 51, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 51, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.assertEqual(result, expected)
 
 class TestFilters(unittest.TestCase):
     def test_blurred(self):
@@ -101,4 +151,4 @@ class TestFilters(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    res = unittest.main(verbosity=3, exit=False)
+    res = unittest.main(verbosity=4, exit=False)
