@@ -17,7 +17,6 @@ class Image:
         self.pixels = pixels
 
     def get_pixel(self, y, x):
-        #print("y={}, x={}".format(y, x))
         if y < 0:
             if x <= 0:
                 return self.pixels[0]
@@ -26,9 +25,9 @@ class Image:
             else:
                 return self.pixels[x]
         elif y > self.height - 1:
-            if x <= 0:
-                return self.pixels[self.width - 1]
-            elif x >= self.width - 1:
+            if x < 0:
+                return self.pixels[(self.height - 1) * self.width]
+            elif x > self.width - 1:
                 return self.pixels[self.width * self.height - 1]
             else:
                 return self.pixels[(self.height - 1) * self.width + x]
@@ -56,11 +55,9 @@ class Image:
 
 
     def cross_correlate(self, y, x, kernel):
-        #print("y={}, x={}".format(y, x))
         result = []
         start_y = int(y - (kernel.height - 1) / 2)
         start_x = int(x - (kernel.width - 1) / 2)
-        #print("start_y={}, start_x={}".format(start_y, start_x))
         kernel_y = 0
         for j in range(start_y, start_y + kernel.height):
             kernel_x = 0
@@ -68,14 +65,17 @@ class Image:
                 result.append(self.get_pixel(j, i) * kernel.get_pixel(kernel_y, kernel_x))
                 kernel_x += 1
             kernel_y += 1
-        #print(result)
         return sum(result)
 
     def filter_with_kernel(self, k):
         result = Image.new(self.width, self.height)
         for y in range(self.height):
             for x in range(self.width):
-                color = self.cross_correlate(y, x, k)
+                color = int(round(self.cross_correlate(y, x, k)))
+                if color < 0:
+                    color = 0
+                elif color > 255:
+                    color = 255
                 result.set_pixel(y, x, color)
         return result
 
@@ -83,7 +83,12 @@ class Image:
         return self.filter_with_kernel(k)
 
     def blurred(self, n):
-        raise NotImplementedError
+        kernel = Image.new(n, n)
+        for y in range(n):
+            for x in range(n):
+                kernel.set_pixel(y, x, 1/ (kernel.width * kernel.height))
+        #print(kernel)
+        return self.filter_with_kernel(kernel)
 
     def sharpened(self, n):
         raise NotImplementedError
