@@ -18,9 +18,9 @@ class Image:
 
     def get_pixel(self, y, x):
         if y < 0:
-            if x <= 0:
+            if x < 0:
                 return self.pixels[0]
-            elif x >= self.width - 1:
+            elif x > self.width - 1:
                 return self.pixels[self.width - 1]
             else:
                 return self.pixels[x]
@@ -84,14 +84,22 @@ class Image:
 
     def blurred(self, n):
         kernel = Image.new(n, n)
-        for y in range(n):
-            for x in range(n):
+        for y in range(kernel.height):
+            for x in range(kernel.width):
                 kernel.set_pixel(y, x, 1/ (kernel.width * kernel.height))
         #print(kernel)
         return self.filter_with_kernel(kernel)
 
     def sharpened(self, n):
-        raise NotImplementedError
+        kernel = Image.new(n, n)
+        for y in range(kernel.width):
+            for x in range(kernel.height):
+                if y == int(kernel.height / 2) and  x == int(kernel.width / 2):
+                    kernel.set_pixel(y, x, 2 - 1/(n*n))
+                else:
+                    kernel.set_pixel(y, x, 0 - 1/(n*n))
+        print("kernel={}".format(kernel.pixels))
+        return self.filter_with_kernel(kernel)
 
     def edges(self):
         raise NotImplementedError
