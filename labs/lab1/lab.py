@@ -17,26 +17,14 @@ class Image:
         self.pixels = pixels
 
     def get_pixel(self, y, x):
-        if y < 0:
-            if x < 0:
-                return self.pixels[0]
-            elif x > self.width - 1:
-                return self.pixels[self.width - 1]
-            else:
-                return self.pixels[x]
-        elif y > self.height - 1:
-            if x < 0:
-                return self.pixels[(self.height - 1) * self.width]
-            elif x > self.width - 1:
-                return self.pixels[self.width * self.height - 1]
-            else:
-                return self.pixels[(self.height - 1) * self.width + x]
-        elif x < 0:
-            return self.pixels[y * self.width]
-        elif x > self.width - 1:
-            return  self.pixels[(y + 1) * self.width - 1]
-
-        return self.pixels[y * self.width + x]
+        """
+        Returns the value of the pixel at location (x,y).
+        If the pixel value is out of range, returns the value at the nearest
+        valid pixel.
+        """
+        y = max(0, min(self.height-1, y))
+        x = max(0, min(self.width-1, x))
+        return self.pixels[self.width*y + x]
 
     def set_pixel(self, y, x, c):
         self.pixels[y * self.width + x] = c
@@ -71,16 +59,14 @@ class Image:
         result = Image.new(self.width, self.height)
         for y in range(self.height):
             for x in range(self.width):
-                color = int(round(self.cross_correlate(y, x, k)))
-                if color < 0:
-                    color = 0
-                elif color > 255:
-                    color = 255
+                color = self.cross_correlate(y, x, k)
                 result.set_pixel(y, x, color)
         return result
 
     def filtered(self, k):
-        return self.filter_with_kernel(k)
+        result = self.filter_with_kernel(k)
+        result.finalize()
+        return result
 
     def blurred(self, n):
         kernel = Image.new(n, n)
@@ -88,7 +74,9 @@ class Image:
             for x in range(kernel.width):
                 kernel.set_pixel(y, x, 1/ (kernel.width * kernel.height))
         #print(kernel)
-        return self.filter_with_kernel(kernel)
+        result = self.filter_with_kernel(kernel)
+        result.finalize()
+        return result
 
     def sharpened(self, n):
         kernel = Image.new(n, n)
@@ -99,10 +87,35 @@ class Image:
                 else:
                     kernel.set_pixel(y, x, 0 - 1/(n*n))
         print("kernel={}".format(kernel.pixels))
-        return self.filter_with_kernel(kernel)
+        result = self.filter_with_kernel(kernel)
+        result.finalize()
+        return  result
+
+    def finalize(self):
+        """
+        Mutate self so that all of its pixel values are valid (i.e., integers
+        in the range 0-255, inclusive).
+        """
+        self.pixels = [max(0, min(255, int(round(i)))) for i in self.pixels]
 
     def edges(self):
-        raise NotImplementedError
+        kernel_x = Image(3, 3, [-1, 0, 1, 
+                                -2, 0, 2,
+                                -1, 0, 1])
+        kernel_y = Image(3, 3, [-1, -2, -1,
+                                 0, 0, 0,
+                                 1, 2, 1])
+        result = Image.new(self.width, self.height)
+        O_x = self.filter_with_kernel(kernel_x)
+        O_y = self.filter_with_kernel(kernel_y)
+        for y in range(result.height):
+            for x in range(result.width):
+                color_x = O_x.get_pixel(y, x)
+                color_y = O_y.get_pixel(y, x)
+                O_x_y = math.sqrt(color_x ** 2 + color_y ** 2)
+                result.set_pixel(y, x, O_x_y)
+        result.finalize()
+        return result
 
 
     # Below this point are utilities for loading, saving, and displaying
